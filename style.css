@@ -5,6 +5,18 @@ body {
   padding: 20px;
 }
 
+#login-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#login-section input {
+  padding: 10px;
+  margin-right: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
 .container {
   max-width: 700px;
   margin: auto;
