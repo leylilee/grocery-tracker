@@ -10,6 +10,14 @@
   <div class="container">
     <h1>🧾 Grocery Spending Tracker</h1>
 
+    <div id="login-section">
+      <input type="text" id="username" placeholder="Enter your name" />
+      <button id="login-btn">Login</button>
+    </div>
+
+    <div id="app-section" style="display:none;">
+      <h2 id="greeting"></h2>
+
     <form id="item-form">
       <input type="date" id="date" required />
       <input type="text" id="item" placeholder="Item name" required />
@@ -46,6 +54,8 @@
     <div class="summary">
       <h2>Summary</h2>
       <div id="summary-content"></div>
+      <div id="weekly-summary"></div>
+      <div id="monthly-summary"></div>
     </div>
   </div>
 
