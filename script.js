@@ -1,7 +1,22 @@
+// ------------------------
+// Firebase references
+// ------------------------
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
+  from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } 
+  from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+const auth = getAuth();
+const db = getFirestore();
+
+// ------------------------
+// DOM elements
+// ------------------------
 const loginSection = document.getElementById("login-section");
 const appSection = document.getElementById("app-section");
 const loginBtn = document.getElementById("login-btn");
 const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
 const greeting = document.getElementById("greeting");
 
 const form = document.getElementById("item-form");
@@ -10,56 +25,82 @@ const summaryDiv = document.getElementById("summary-content");
 const weeklyDiv = document.getElementById("weekly-summary");
 const monthlyDiv = document.getElementById("monthly-summary");
 
-let currentUser = localStorage.getItem("currentUser");
-let users = JSON.parse(localStorage.getItem("users")) || {}; // each user has their own data
+let currentUserEmail = null;
 
-// --- LOGIN LOGIC ---
-if (currentUser && users[currentUser]) {
-  showApp(currentUser);
-}
+// ------------------------
+// AUTH & LOGIN
+// ------------------------
+loginBtn.addEventListener("click", async () => {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
 
-loginBtn.addEventListener("click", () => {
-  const name = usernameInput.value.trim();
-  if (!name) return alert("Enter your name first!");
+  if (!username || !password) return alert("Enter username and password!");
 
-  if (!users[name]) users[name] = [];
-  localStorage.setItem("currentUser", name);
-  localStorage.setItem("users", JSON.stringify(users));
+  // convert username to fake email
+  const email = `${username}@example.com`;
 
-  showApp(name);
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    // if user does not exist, create it
+    await createUserWithEmailAndPassword(auth, email, password);
+  }
 });
 
-function showApp(name) {
+// Listen for auth state changes
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUserEmail = user.email;
+    showApp(currentUserEmail.split("@")[0]); // username part
+  }
+});
+
+function showApp(username) {
   loginSection.style.display = "none";
   appSection.style.display = "block";
-  greeting.textContent = `Hi, ${name}!`;
-  currentUser = name;
-  renderTable();
-  renderSummaries();
+  greeting.textContent = `Hi, ${username}!`;
+  loadReceipts();
 }
 
-// --- ITEM ADDING LOGIC ---
-form.addEventListener("submit", (e) => {
+// ------------------------
+// ADD RECEIPT
+// ------------------------
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const newItem = {
+
+  const item = {
     date: document.getElementById("date").value,
     name: document.getElementById("item").value,
     category: document.getElementById("category").value,
-    price: parseFloat(document.getElementById("price").value)
+    price: parseFloat(document.getElementById("price").value),
+    user: currentUserEmail
   };
 
-  users[currentUser].push(newItem);
-  localStorage.setItem("users", JSON.stringify(users));
-
-  renderTable();
-  renderSummaries();
+  await addDoc(collection(db, "receipts"), item);
   form.reset();
+  loadReceipts();
 });
 
-// --- TABLE DISPLAY ---
-function renderTable() {
+// ------------------------
+// LOAD RECEIPTS
+// ------------------------
+async function loadReceipts() {
+  const q = query(collection(db, "receipts"), where("user", "==", currentUserEmail));
+  const snapshot = await getDocs(q);
+
+  const receipts = [];
+  snapshot.forEach(doc => receipts.push(doc.data()));
+
+  renderTable(receipts);
+  renderSummaries(receipts);
+}
+
+// ------------------------
+// TABLE RENDERING
+// ------------------------
+function renderTable(receipts) {
   tableBody.innerHTML = "";
-  users[currentUser].forEach(item => {
+  receipts.forEach(item => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${item.date}</td>
@@ -71,17 +112,19 @@ function renderTable() {
   });
 }
 
-// --- SUMMARY FUNCTIONS ---
-function renderSummaries() {
-  renderCategorySummary();
-  renderWeeklySummary();
-  renderMonthlySummary();
+// ------------------------
+// SUMMARIES
+// ------------------------
+function renderSummaries(receipts) {
+  renderCategorySummary(receipts);
+  renderWeeklySummary(receipts);
+  renderMonthlySummary(receipts);
 }
 
-function renderCategorySummary() {
+function renderCategorySummary(receipts) {
   const byCategory = {};
   let total = 0;
-  users[currentUser].forEach(item => {
+  receipts.forEach(item => {
     byCategory[item.category] = (byCategory[item.category] || 0) + item.price;
     total += item.price;
   });
@@ -94,12 +137,12 @@ function renderCategorySummary() {
   summaryDiv.innerHTML = html;
 }
 
-function renderWeeklySummary() {
+function renderWeeklySummary(receipts) {
   const byWeek = {};
-  users[currentUser].forEach(item => {
+  receipts.forEach(item => {
     const date = new Date(item.date);
     const weekStart = getWeekStart(date);
-    const key = `${weekStart.toLocaleDateString()} - ${new Date(weekStart.getTime() + 6 * 86400000).toLocaleDateString()}`;
+    const key = `${weekStart.toLocaleDateString()} - ${new Date(weekStart.getTime() + 6*86400000).toLocaleDateString()}`;
     byWeek[key] = (byWeek[key] || 0) + item.price;
   });
 
@@ -111,9 +154,9 @@ function renderWeeklySummary() {
   weeklyDiv.innerHTML = html;
 }
 
-function renderMonthlySummary() {
+function renderMonthlySummary(receipts) {
   const byMonth = {};
-  users[currentUser].forEach(item => {
+  receipts.forEach(item => {
     const date = new Date(item.date);
     const key = date.toLocaleString("default", { month: "long", year: "numeric" });
     byMonth[key] = (byMonth[key] || 0) + item.price;
@@ -127,8 +170,11 @@ function renderMonthlySummary() {
   monthlyDiv.innerHTML = html;
 }
 
+// ------------------------
+// HELPER FUNCTION: Week start
+// ------------------------
 function getWeekStart(date) {
-  const day = date.getDay(); // 0 = Sunday
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day of week
+  const day = date.getDay(); // Sunday = 0
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
   return new Date(date.setDate(diff));
 }
