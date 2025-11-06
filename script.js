@@ -1,13 +1,25 @@
-// ------------------------
-// Firebase references
-// ------------------------
+// Firebase imports & setup
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-const auth = getAuth();
-const db = getFirestore();
+// Firebase config (same as before)
+const firebaseConfig = {
+  apiKey: "AIzaSyAjCIYiyTd2cnH3ucTv87sWSNPZzwoUP58",
+  authDomain: "grocery-tracker-bcf2c.firebaseapp.com",
+  projectId: "grocery-tracker-bcf2c",
+  storageBucket: "grocery-tracker-bcf2c.firebasestorage.app",
+  messagingSenderId: "1028552694531",
+  appId: "1:1028552694531:web:46454f440513bd9352a736"
+};
+
+// ✅ Initialize Firebase correctly
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 
 // ------------------------
 // DOM elements
