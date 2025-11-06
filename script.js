@@ -85,8 +85,9 @@ form.addEventListener("submit", async (e) => {
     name: document.getElementById("item").value,
     category: document.getElementById("category").value,
     price: parseFloat(document.getElementById("price").value),
-    user: currentUserEmail
+    user: currentUserEmail // ✅ this matches the security rule
   };
+
 
   await addDoc(collection(db, "receipts"), item);
   form.reset();
