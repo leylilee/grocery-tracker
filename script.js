@@ -1,5 +1,5 @@
 // Firebase imports & setup
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where } 
