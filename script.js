@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAjCIYiyTd2cnH3ucTv87sWSNPZzwoUP58",
   authDomain: "grocery-tracker-bcf2c.firebaseapp.com",
   projectId: "grocery-tracker-bcf2c",
-  storageBucket: "grocery-tracker-bcf2c.firebasestorage.app",
+  storageBucket: "grocery-tracker-bcf2c.appspot.com",
   messagingSenderId: "1028552694531",
   appId: "1:1028552694531:web:46454f440513bd9352a736"
 };
