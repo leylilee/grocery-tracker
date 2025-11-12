@@ -1,10 +1,9 @@
 // Firebase imports & setup
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
 
 // Firebase config (same as before)
@@ -105,10 +104,7 @@ signupBtn.addEventListener("click", async () => {
   }
 });
 
-// LOGOUT
-logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-});
+
 
 
 // SHOW APP
