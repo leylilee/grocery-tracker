@@ -17,6 +17,24 @@ body {
   border: 1px solid #ccc;
 }
 
+.login-buttons {
+  margin-top: 10px;
+}
+
+.login-buttons button {
+  margin: 5px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  background-color: #4c7daf;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.login-buttons button:hover {
+  background-color: #7193c2;
+}
+
 .container {
   max-width: 700px;
   margin: auto;

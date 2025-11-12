@@ -27,10 +27,11 @@ const db = getFirestore(app);
 const loginSection = document.getElementById("login-section");
 const appSection = document.getElementById("app-section");
 const loginBtn = document.getElementById("login-btn");
+const signupBtn = document.getElementById("signup-btn");
+const logoutBtn = document.getElementById("logout-btn");
 const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const greeting = document.getElementById("greeting");
-
 const form = document.getElementById("item-form");
 const tableBody = document.querySelector("#items-table tbody");
 const summaryDiv = document.getElementById("summary-content");
@@ -39,34 +40,62 @@ const monthlyDiv = document.getElementById("monthly-summary");
 
 let currentUserEmail = null;
 
-// ------------------------
-// AUTH & LOGIN
-// ------------------------
-loginBtn.addEventListener("click", async () => {
-  const username = usernameInput.value.trim();
-  const password = passwordInput.value;
+// Capitalize helper
+function capitalize(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
-  if (!username || !password) return alert("Enter username and password!");
-
-  // convert username to fake email
-  const email = `${username}@example.com`;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    // if user does not exist, create it
-    await createUserWithEmailAndPassword(auth, email, password);
-  }
-});
 
 // Listen for auth state changes
 onAuthStateChanged(auth, (user) => {
   if (user) {
     currentUserEmail = user.email;
-    showApp(currentUserEmail.split("@")[0]); // username part
+    const username = currentUserEmail.split("@")[0];
+    showApp(capitalize(username));
+  } else {
+    appSection.style.display = "none";
+    loginSection.style.display = "block";
   }
 });
 
+// LOGIN
+loginBtn.addEventListener("click", async () => {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!username || !password) return alert("Enter username and password!");
+  const email = `${username}@example.com`;
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    alert("Invalid credentials. Please try again or sign up.");
+  }
+});
+
+// SIGNUP
+signupBtn.addEventListener("click", async () => {
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!username || !password) return alert("Enter username and password!");
+  const email = `${username}@example.com`;
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    alert("Account created! You are now logged in.");
+  } catch (err) {
+    alert("Sign-up failed. Maybe this username is already taken.");
+  }
+});
+
+// LOGOUT
+logoutBtn.addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+
+// SHOW APP
 function showApp(username) {
   loginSection.style.display = "none";
   appSection.style.display = "block";
