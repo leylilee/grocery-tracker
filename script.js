@@ -4,6 +4,8 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, on
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, where } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+
 
 // Firebase config (same as before)
 const firebaseConfig = {
@@ -39,6 +41,20 @@ const weeklyDiv = document.getElementById("weekly-summary");
 const monthlyDiv = document.getElementById("monthly-summary");
 
 let currentUserEmail = null;
+
+logoutBtn.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    appSection.style.display = "none";
+    loginSection.style.display = "block";
+    usernameInput.value = "";
+    passwordInput.value = "";
+    alert("You have been logged out.");
+  } catch (err) {
+    console.error("Logout error:", err);
+  }
+});
+
 
 // Capitalize helper
 function capitalize(name) {
