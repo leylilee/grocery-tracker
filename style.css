@@ -138,5 +138,11 @@ table th, table td {
   display: none;
 }
 
+#ocr-result {
+  background: #eef;
+  padding: 8px;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
 
 

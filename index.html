@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grocery Spending Tracker</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
+  
 
 </head>
 <body>
@@ -44,6 +45,14 @@
         <button type="submit">Add Item</button>
       </form>
 
+      <div id="ocr-section">
+        <h3>Scan Receipt (AI)</h3>
+        <input type="file" id="receipt-image" accept="image/*" />
+        <button id="scan-btn">Scan Receipt</button>
+        <div id="ocr-result" style="margin-top:10px;"></div>
+      </div>
+
+
       <h2>Items</h2>
       <table id="items-table">
         <thead>
@@ -67,6 +76,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
   <script type="module" src="script.js"></script>
 
 </body>
