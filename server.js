@@ -1,42 +1,41 @@
 import express from "express";
-import fetch from "node-fetch"; // or native fetch in Node 20+
-import cors from "cors";
+import bodyParser from "body-parser";
+import OpenAI from "openai";
 
 const app = express();
-app.use(express.json());
-app.use(cors());
+app.use(bodyParser.json());
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/api/parse-receipt", async (req, res) => {
   const { receipt_text } = req.body;
-
-  const prompt = `
-You are a grocery parser. Extract items from this receipt text.
-Return JSON array of objects: { "name": "...", "price": 0.0, "category": "..." }.
-Receipt text:
-${receipt_text}
-`;
-
-  const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-4",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0,
-    }),
-  });
-
-  const json = await aiResponse.json();
-  const text = json.choices[0].message.content;
+  
+  if (!receipt_text) return res.status(400).json({ error: "No receipt text provided" });
 
   try {
-    const items = JSON.parse(text);
+    const prompt = `
+      Parse the following receipt text into a JSON array of items with name, price, and category:
+      ${receipt_text}
+
+      Output example:
+      [
+        {"name": "Apple", "price": 1.5, "category": "Fruits & Vegetables"},
+        {"name": "Milk", "price": 2.3, "category": "Dairy & Eggs"}
+      ]
+    `;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [{ role: "user", content: prompt }]
+    });
+
+    // The AI returns text; parse it to JSON
+    const items = JSON.parse(completion.choices[0].message.content);
     res.json({ items });
-  } catch {
-    res.json({ items: [] });
+    
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "AI parsing failed" });
   }
 });
 
