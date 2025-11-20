@@ -108,12 +108,24 @@ table th, table td {
 .menu {
   position: absolute;
   right: 0;
+  top: 100%;
   background: white;
   border: 1px solid #ccc;
   border-radius: 6px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   padding: 5px 0;
   z-index: 10;
+  display: none;       /* hide by default */
+  opacity: 0;
+  transform: scale(0.95);
+  transition: 0.15s ease;
+  flex-direction: column;
+}
+
+.menu.show {
+  display: flex;
+  opacity: 1;
+  transform: scale(1);
 }
 
 .menu div {
@@ -130,15 +142,5 @@ table th, table td {
   display: none;
 }
 
-.menu {
-  opacity: 0;
-  transform: scale(0.95);
-  transition: 0.15s ease;
-}
 
-.menu.show {
-  display: flex;
-  opacity: 1;
-  transform: scale(1);
-}
 
