@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } 
+import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc } 
   from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 
@@ -143,28 +143,74 @@ async function loadReceipts() {
   const snapshot = await getDocs(q);
 
   const receipts = [];
-  snapshot.forEach(doc => receipts.push(doc.data()));
+  snapshot.forEach(d => {
+    receipts.push({
+      id: d.id,       // include Firebase document id
+      ...d.data()
+    });
+  });
 
   renderTable(receipts);
   renderSummaries(receipts);
 }
+
 
 // ------------------------
 // TABLE RENDERING
 // ------------------------
 function renderTable(receipts) {
   tableBody.innerHTML = "";
+
   receipts.forEach(item => {
     const row = document.createElement("tr");
+
     row.innerHTML = `
       <td>${item.date}</td>
       <td>${item.name}</td>
       <td>${item.category}</td>
       <td>${item.price.toFixed(2)}</td>
+      <td>
+        <div class="more-menu">
+          <button class="more-btn">⋮</button>
+          <div class="menu-options">
+            <button class="edit-option">Edit</button>
+            <button class="delete-option">Delete</button>
+          </div>
+        </div>
+      </td>
     `;
+
     tableBody.appendChild(row);
+
+    const menu = row.querySelector(".menu-options");
+    const moreBtn = row.querySelector(".more-btn");
+
+    // toggle menu
+    moreBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    });
+
+    // edit 
+    row.querySelector(".edit-option").addEventListener("click", () => {
+      editItem(item.id, item);
+      menu.style.display = "none";
+    });
+
+    // delete
+    row.querySelector(".delete-option").addEventListener("click", () => {
+      deleteItem(item.id);
+      menu.style.display = "none";
+    });
+  });
+
+  // Close all menus on click away
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".menu-options").forEach(m => m.style.display = "none");
   });
 }
+
+
 
 // ------------------------
 // SUMMARIES
@@ -232,3 +278,34 @@ function getWeekStart(date) {
   const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
   return new Date(date.setDate(diff));
 }
+
+async function deleteItem(id) {
+  if (!confirm("Delete this item?")) return;
+
+  await deleteDoc(doc(db, "receipts", id));
+  loadReceipts();
+}
+
+async function editItem(id, item) {
+  const newName = prompt("Edit item name:", item.name);
+  if (newName === null) return;
+
+  const newPrice = prompt("Edit price:", item.price);
+  if (newPrice === null) return;
+
+  const newCategory = prompt("Edit category:", item.category);
+  if (newCategory === null) return;
+
+  const newDate = prompt("Edit date (YYYY-MM-DD):", item.date);
+  if (newDate === null) return;
+
+  await updateDoc(doc(db, "receipts", id), {
+    name: newName,
+    price: parseFloat(newPrice),
+    category: newCategory,
+    date: newDate
+  });
+
+  loadReceipts();
+}
+

@@ -90,3 +90,55 @@ table th, table td {
   padding: 15px;
   border-radius: 8px;
 }
+
+/* Edit/Delete Menu Styles   */
+
+.actions {
+  position: relative;
+}
+
+.menu-btn {
+  cursor: pointer;
+  font-size: 20px;
+  padding: 5px;
+  background: none;
+  border: none;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  padding: 5px 0;
+  z-index: 10;
+}
+
+.menu div {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.menu div:hover {
+  background: #eee;
+}
+
+/* This class hides the menu when not open */
+.hidden {
+  display: none;
+}
+
+.menu {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: 0.15s ease;
+}
+
+.menu.show {
+  display: flex;
+  opacity: 1;
+  transform: scale(1);
+}
+
