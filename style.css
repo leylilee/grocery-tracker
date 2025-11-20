@@ -115,18 +115,14 @@ table th, table td {
   box-shadow: 0 2px 5px rgba(0,0,0,0.15);
   padding: 5px 0;
   z-index: 10;
-  display: none;       /* hide by default */
-  opacity: 0;
-  transform: scale(0.95);
-  transition: 0.15s ease;
+  display: none; /* hidden by default */
   flex-direction: column;
 }
 
 .menu.show {
-  display: flex;
-  opacity: 1;
-  transform: scale(1);
+  display: flex; /* JS toggles 'show' */
 }
+
 
 .menu div {
   padding: 8px 12px;
