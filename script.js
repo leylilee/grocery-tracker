@@ -169,16 +169,15 @@ function renderTable(receipts) {
       <td>${item.name}</td>
       <td>${item.category}</td>
       <td>${item.price.toFixed(2)}</td>
-      <td>
-        <div class="more-menu">
-          <button class="more-btn">⋮</button>
-          <div class="menu-options">
-            <button class="edit-option">Edit</button>
-            <button class="delete-option">Delete</button>
+      <td class="actions">
+          <button class="menu-btn">⋮</button>
+          <div class="menu hidden">
+              <div class="edit-btn" data-id="${item.id}">Edit</div>
+              <div class="delete-btn" data-id="${item.id}">Delete</div>
           </div>
-        </div>
       </td>
     `;
+
 
     tableBody.appendChild(row);
 
@@ -210,7 +209,37 @@ function renderTable(receipts) {
   });
 }
 
+tableBody.addEventListener("click", async (e) => {
+  const row = e.target.closest("tr");
+  if (!row) return;
 
+  // Toggle menu
+  if (e.target.classList.contains("menu-btn")) {
+    const menu = row.querySelector(".menu");
+    menu.classList.toggle("hidden");
+    return;
+  }
+
+  // Edit
+  if (e.target.classList.contains("edit-option")) {
+    const id = e.target.dataset.id;
+    const item = {
+      name: row.children[1].textContent,
+      category: row.children[2].textContent,
+      price: parseFloat(row.children[3].textContent),
+      date: row.children[0].textContent
+    };
+    await editItem(id, item);
+    return;
+  }
+
+  // Delete
+  if (e.target.classList.contains("delete-option")) {
+    const id = e.target.dataset.id;
+    await deleteItem(id);
+    return;
+  }
+});
 
 // ------------------------
 // SUMMARIES
