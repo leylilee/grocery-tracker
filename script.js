@@ -136,6 +136,69 @@ form.addEventListener("submit", async (e) => {
 });
 
 // ------------------------
+// OCR / AI Receipt Scan
+// ------------------------
+const receiptImageInput = document.getElementById("receipt-image");
+const scanBtn = document.getElementById("scan-btn");
+const ocrResultDiv = document.getElementById("ocr-result");
+
+scanBtn.addEventListener("click", async () => {
+  const file = receiptImageInput.files[0];
+  if (!file) return alert("Select a receipt image!");
+
+  ocrResultDiv.textContent = "Scanning receipt... ⏳";
+
+  try {
+    // OCR with Tesseract
+    const { data: { text } } = await Tesseract.recognize(file, "eng", {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          ocrResultDiv.textContent = `Processing: ${Math.round(m.progress * 100)}%`;
+        }
+      }
+    });
+
+    ocrResultDiv.textContent = "OCR complete. Text detected:\n" + text;
+
+    // AI Parsing (replace with your endpoint or OpenAI API)
+    const aiItems = await parseReceiptAI(text);
+
+    // Add AI-detected items to Firestore
+    await addAIItems(aiItems);
+
+    alert(`${aiItems.length} items added!`);
+    receiptImageInput.value = "";
+    ocrResultDiv.textContent = "Scan complete ✅";
+
+  } catch (err) {
+    console.error(err);
+    ocrResultDiv.textContent = "Error scanning receipt!";
+  }
+});
+
+// Parse OCR text with AI
+async function parseReceiptAI(receiptText) {
+  const response = await fetch("/api/parse-receipt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ receipt_text: receiptText })
+  });
+
+  const data = await response.json(); 
+  // Expected: [{name, price, category}, ...]
+  return data.items;
+}
+
+// Add AI items to Firestore
+async function addAIItems(items) {
+  for (const item of items) {
+    await addDoc(collection(db, "receipts"), { ...item, user: currentUserEmail });
+  }
+  loadReceipts();
+}
+
+
+// ------------------------
 // LOAD RECEIPTS
 // ------------------------
 async function loadReceipts() {
@@ -154,62 +217,7 @@ async function loadReceipts() {
   renderSummaries(receipts);
 }
 
-const receiptImageInput = document.getElementById("receipt-image");
-const scanBtn = document.getElementById("scan-btn");
-const ocrResultDiv = document.getElementById("ocr-result");
 
-// 1️⃣ Scan Receipt
-scanBtn.addEventListener("click", async () => {
-  const file = receiptImageInput.files[0];
-  if (!file) return alert("Select a receipt image!");
-
-  ocrResultDiv.textContent = "Scanning receipt... ⏳";
-
-  try {
-    // OCR with Tesseract
-    const { data: { text } } = await Tesseract.recognize(file, "eng");
-    ocrResultDiv.textContent = "OCR Result:\n" + text;
-
-    // 2️⃣ AI Parsing
-    const aiItems = await parseReceiptAI(text);
-
-    // 3️⃣ Add items to Firestore
-    await addAIItems(aiItems);
-
-    alert(`${aiItems.length} items added to your list!`);
-    receiptImageInput.value = "";
-    ocrResultDiv.textContent = "Scan complete ✅";
-
-  } catch (err) {
-    console.error(err);
-    ocrResultDiv.textContent = "Error scanning receipt!";
-  }
-});
-
-// Example: sending receipt text to AI endpoint for parsing
-async function parseReceiptAI(receiptText) {
-  // Replace this with your backend endpoint or OpenAI call
-  const response = await fetch("/api/parse-receipt", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ receipt_text: receiptText })
-  });
-
-  const data = await response.json(); 
-  // Should return: [{name, price, category}, ...]
-  return data.items;
-}
-
-// Add AI-detected items to Firestore
-async function addAIItems(items) {
-  for (const item of items) {
-    await addDoc(collection(db, "receipts"), {
-      ...item,
-      user: currentUserEmail
-    });
-  }
-  loadReceipts();
-}
 
 // ------------------------
 // TABLE RENDERING
