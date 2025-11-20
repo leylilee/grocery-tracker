@@ -170,52 +170,27 @@ function renderTable(receipts) {
       <td>${item.category}</td>
       <td>${item.price.toFixed(2)}</td>
       <td class="actions">
-          <button class="menu-btn">⋮</button>
-          <div class="menu hidden">
-              <div class="edit-btn" data-id="${item.id}">Edit</div>
-              <div class="delete-btn" data-id="${item.id}">Delete</div>
-          </div>
+        <button class="menu-btn">⋮</button>
+        <div class="menu hidden">
+          <div class="edit-option" data-id="${item.id}">Edit</div>
+          <div class="delete-option" data-id="${item.id}">Delete</div>
+        </div>
       </td>
     `;
 
-
     tableBody.appendChild(row);
-
-    const menu = row.querySelector(".menu-options");
-    const moreBtn = row.querySelector(".more-btn");
-
-    // toggle menu
-    moreBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    });
-
-    // edit 
-    row.querySelector(".edit-option").addEventListener("click", () => {
-      editItem(item.id, item);
-      menu.style.display = "none";
-    });
-
-    // delete
-    row.querySelector(".delete-option").addEventListener("click", () => {
-      deleteItem(item.id);
-      menu.style.display = "none";
-    });
-  });
-
-  // Close all menus on click away
-  document.addEventListener("click", () => {
-    document.querySelectorAll(".menu-options").forEach(m => m.style.display = "none");
   });
 }
 
+// --- Table click listener ---
 tableBody.addEventListener("click", async (e) => {
   const row = e.target.closest("tr");
   if (!row) return;
 
+  const menu = row.querySelector(".menu");
+
   // Toggle menu
   if (e.target.classList.contains("menu-btn")) {
-    const menu = row.querySelector(".menu");
     menu.classList.toggle("hidden");
     return;
   }
@@ -230,6 +205,7 @@ tableBody.addEventListener("click", async (e) => {
       date: row.children[0].textContent
     };
     await editItem(id, item);
+    menu.classList.add("hidden");
     return;
   }
 
@@ -237,9 +213,18 @@ tableBody.addEventListener("click", async (e) => {
   if (e.target.classList.contains("delete-option")) {
     const id = e.target.dataset.id;
     await deleteItem(id);
+    menu.classList.add("hidden");
     return;
   }
 });
+
+// Close all menus when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.classList.contains("menu-btn") && !e.target.classList.contains("menu")) {
+    document.querySelectorAll(".menu").forEach(m => m.classList.add("hidden"));
+  }
+});
+
 
 // ------------------------
 // SUMMARIES
