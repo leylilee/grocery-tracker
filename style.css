@@ -123,7 +123,6 @@ table th, table td {
   display: flex; /* JS toggles 'show' */
 }
 
-
 .menu div {
   padding: 8px 12px;
   cursor: pointer;
@@ -133,16 +132,6 @@ table th, table td {
   background: #eee;
 }
 
-/* This class hides the menu when not open */
-.hidden {
-  display: none;
-}
 
-#ocr-result {
-  background: #eef;
-  padding: 8px;
-  border-radius: 6px;
-  white-space: pre-wrap;
-}
 
 

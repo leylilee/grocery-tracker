@@ -235,7 +235,7 @@ function renderTable(receipts) {
       <td>${item.price.toFixed(2)}</td>
       <td class="actions">
         <button class="menu-btn">⋮</button>
-        <div class="menu hidden">
+        <div class="menu">
           <div class="edit-option" data-id="${item.id}">Edit</div>
           <div class="delete-option" data-id="${item.id}">Delete</div>
         </div>
@@ -255,7 +255,7 @@ tableBody.addEventListener("click", async (e) => {
 
   // Toggle menu
   if (e.target.classList.contains("menu-btn")) {
-    menu.classList.toggle("hidden");
+    menu.classList.toggle("show");
     return;
   }
 
@@ -269,7 +269,7 @@ tableBody.addEventListener("click", async (e) => {
       date: row.children[0].textContent
     };
     await editItem(id, item);
-    menu.classList.add("hidden");
+    menu.classList.remove("show");
     return;
   }
 
@@ -277,15 +277,15 @@ tableBody.addEventListener("click", async (e) => {
   if (e.target.classList.contains("delete-option")) {
     const id = e.target.dataset.id;
     await deleteItem(id);
-    menu.classList.add("hidden");
+    menu.classList.remove("show");
     return;
   }
 });
 
 // Close all menus when clicking outside
 document.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("menu-btn") && !e.target.classList.contains("menu")) {
-    document.querySelectorAll(".menu").forEach(m => m.classList.add("hidden"));
+  if (!e.target.closest(".menu") && !e.target.classList.contains("menu-btn")) {
+    document.querySelectorAll(".menu").forEach(m => m.classList.remove("show"));
   }
 });
 
@@ -359,7 +359,6 @@ function getWeekStart(date) {
 
 async function deleteItem(id) {
   if (!confirm("Delete this item?")) return;
-
   await deleteDoc(doc(db, "receipts", id));
   loadReceipts();
 }
@@ -386,4 +385,3 @@ async function editItem(id, item) {
 
   loadReceipts();
 }
-
