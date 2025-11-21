@@ -178,16 +178,21 @@ scanBtn.addEventListener("click", async () => {
 
 // Parse OCR text with AI
 async function parseReceiptAI(receiptText) {
-  const response = await fetch("/api/parse-receipt", {
+  const response = await fetch("http://localhost:3000/api/parse-receipt", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ receipt_text: receiptText })
   });
 
-  const data = await response.json(); 
-  // Expected: [{name, price, category}, ...]
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Server error ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
   return data.items;
 }
+
 
 // Add AI items to Firestore
 async function addAIItems(items) {
