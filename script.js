@@ -253,13 +253,11 @@ tableBody.addEventListener("click", async (e) => {
 
   const menu = row.querySelector(".menu");
 
-  // Toggle menu
   if (e.target.classList.contains("menu-btn")) {
     menu.classList.toggle("show");
     return;
   }
 
-  // Edit
   if (e.target.classList.contains("edit-option")) {
     const id = e.target.dataset.id;
     const item = {
@@ -273,7 +271,6 @@ tableBody.addEventListener("click", async (e) => {
     return;
   }
 
-  // Delete
   if (e.target.classList.contains("delete-option")) {
     const id = e.target.dataset.id;
     await deleteItem(id);
@@ -282,13 +279,12 @@ tableBody.addEventListener("click", async (e) => {
   }
 });
 
-// Close all menus when clicking outside
+// --- Close menus when clicking outside ---
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".menu") && !e.target.classList.contains("menu-btn")) {
     document.querySelectorAll(".menu").forEach(m => m.classList.remove("show"));
   }
 });
-
 
 // ------------------------
 // SUMMARIES
