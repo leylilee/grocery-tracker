@@ -179,7 +179,7 @@ scanBtn.addEventListener("click", async () => {
 // Parse OCR text with AI
 async function parseReceiptAI(receiptText) {
   // For local development in Codespace:
-  const response = await fetch("http://localhost:3000/api/parse-receipt", {
+  const response = await fetch("http://localhost:5500/api/parse-receipt", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ receipt_text: receiptText })
