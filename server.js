@@ -4,8 +4,10 @@ dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
 import OpenAI from "openai";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -27,19 +29,23 @@ app.post("/api/parse-receipt", async (req, res) => {
       ]
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: prompt }]
-    });
+    // Safer JSON parsing
+    let items;
+    try {
+      items = JSON.parse(completion.choices[0].message.content);
+    } catch (err) {
+      console.error("Failed to parse AI response as JSON:", err);
+      console.log("AI response text:", completion.choices[0].message.content);
+      return res.status(500).json({ error: "AI returned invalid JSON" });
+    }
 
-    // The AI returns text; parse it to JSON
-    const items = JSON.parse(completion.choices[0].message.content);
     res.json({ items });
-    
+
   } catch (err) {
-    console.error(err);
+    console.error("AI parsing failed:", err);
     res.status(500).json({ error: "AI parsing failed" });
   }
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
