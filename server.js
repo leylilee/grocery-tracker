@@ -7,6 +7,7 @@ import OpenAI from "openai";
 import cors from "cors";
 
 const app = express();
+import cors from "cors";
 app.use(cors());
 app.use(bodyParser.json());
 
