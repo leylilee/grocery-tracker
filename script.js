@@ -149,7 +149,9 @@ scanBtn.addEventListener("click", async () => {
   ocrResultDiv.textContent = "Scanning receipt... ⏳";
 
   try {
-    // OCR with Tesseract
+    // ------------------------
+    // ✅ Simple OCR using Tesseract
+    // ------------------------
     const { data: { text } } = await Tesseract.recognize(file, "eng", {
       logger: m => {
         if (m.status === 'recognizing text') {
@@ -160,48 +162,39 @@ scanBtn.addEventListener("click", async () => {
 
     ocrResultDiv.textContent = "OCR complete. Text detected:\n" + text;
 
-    // AI Parsing (replace with your endpoint or OpenAI API)
-    const aiItems = await parseReceiptAI(text);
+    // ------------------------
+    // ✅ Parse text into lines/items (simple)
+    // ------------------------
+    const lines = text.split("\n").map(line => line.trim()).filter(line => line);
+    const items = lines.map(line => ({
+      name: line,
+      price: 0,       // You can extend to extract price with regex later
+      category: "Unknown",
+      date: new Date().toISOString().split("T")[0], // default today
+      user: currentUserEmail
+    }));
 
-    // Add AI-detected items to Firestore
-    await addAIItems(aiItems);
+    // ------------------------
+    // ✅ Add detected lines/items to Firestore
+    // ------------------------
+    for (const item of items) {
+      await addDoc(collection(db, "receipts"), item);
+    }
 
-    alert(`${aiItems.length} items added!`);
+    // ------------------------
+    // ✅ Update UI
+    // ------------------------
+    alert(`${items.length} lines/items added!`);
     receiptImageInput.value = "";
     ocrResultDiv.textContent = "Scan complete ✅";
+
+    loadReceipts();
 
   } catch (err) {
     console.error(err);
     ocrResultDiv.textContent = "Error scanning receipt!";
   }
 });
-
-// Parse OCR text with AI
-async function parseReceiptAI(receiptText) {
-  // For local development in Codespace:
-  const response = await fetch("http://localhost:3000/api/parse-receipt", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ receipt_text: receiptText })
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Server error ${response.status}: ${errorText}`);
-  }
-
-  const data = await response.json();
-  return data.items;
-}
-
-
-// Add AI items to Firestore
-async function addAIItems(items) {
-  for (const item of items) {
-    await addDoc(collection(db, "receipts"), { ...item, user: currentUserEmail });
-  }
-  loadReceipts();
-}
 
 
 // ------------------------
