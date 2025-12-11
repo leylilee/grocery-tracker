@@ -3,51 +3,50 @@ dotenv.config();
 
 import express from "express";
 import bodyParser from "body-parser";
-import OpenAI from "openai";
-import cors from "cors";
+import fetch from "node-fetch";
 
 const app = express();
-app.use(cors());
 app.use(bodyParser.json());
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
 
 app.post("/api/parse-receipt", async (req, res) => {
   const { receipt_text } = req.body;
-
-  if (!receipt_text) {
-    return res.status(400).json({ error: "No receipt text provided" });
-  }
+  if (!receipt_text) return res.status(400).json({ error: "No receipt text provided" });
 
   try {
     const prompt = `
-      Parse the following receipt text into a JSON array of items with name, price, and category:
+      Parse this receipt text into a JSON array of items with name, price, and category:
       ${receipt_text}
 
-      Output ONLY valid JSON. Example:
+      Output example:
       [
         {"name": "Apple", "price": 1.5, "category": "Fruits & Vegetables"},
         {"name": "Milk", "price": 2.3, "category": "Dairy & Eggs"}
       ]
     `;
 
-    // NEW SYNTAX for OpenAI API v6
-    const response = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: prompt }]
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/groq/receipt-parser", // Replace with the model you want
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${HUGGINGFACE_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ inputs: prompt })
+      }
+    );
 
-    const text = response.choices[0].message.content;
-
-    // Safely parse JSON
-    let items;
-    try {
-      items = JSON.parse(text);
-    } catch (e) {
-      console.error("JSON parsing error:", e);
-      return res.status(500).json({ error: "AI returned invalid JSON", raw: text });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Hugging Face API error ${response.status}: ${errText}`);
     }
 
+    const data = await response.json();
+
+    // The model response is usually in data[0].generated_text
+    const items = JSON.parse(data[0].generated_text);
     res.json({ items });
 
   } catch (err) {
