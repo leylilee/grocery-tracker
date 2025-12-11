@@ -4,7 +4,7 @@ dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import Teserract from "teserract.js";
+import Tesseract from "tesseract.js";
 import fs from "fs";
 
 const app = express();
