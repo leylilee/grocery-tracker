@@ -4,8 +4,10 @@ dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
 import fetch from "node-fetch";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 app.use(bodyParser.json());
 
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
@@ -46,7 +48,14 @@ app.post("/api/parse-receipt", async (req, res) => {
     const data = await response.json();
 
     // The model response is usually in data[0].generated_text
-    const items = JSON.parse(data[0].generated_text);
+    let items;
+    try {
+      items = JSON.parse(data[0].generated_text);
+    } catch {
+      console.error("Invalid JSON from Hugging Face:", data[0].generated_text);
+      return res.status(500).json({ error: "Invalid JSON returned from AI" });
+    }
+
     res.json({ items });
 
   } catch (err) {
