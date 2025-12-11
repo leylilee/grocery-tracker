@@ -14,29 +14,38 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/api/parse-receipt", async (req, res) => {
   const { receipt_text } = req.body;
-  
-  if (!receipt_text) return res.status(400).json({ error: "No receipt text provided" });
+
+  if (!receipt_text) {
+    return res.status(400).json({ error: "No receipt text provided" });
+  }
 
   try {
     const prompt = `
       Parse the following receipt text into a JSON array of items with name, price, and category:
       ${receipt_text}
 
-      Output example:
+      Output ONLY valid JSON. Example:
       [
         {"name": "Apple", "price": 1.5, "category": "Fruits & Vegetables"},
         {"name": "Milk", "price": 2.3, "category": "Dairy & Eggs"}
       ]
     `;
 
-    // Safer JSON parsing
+    // NEW SYNTAX for OpenAI API v6
+    const response = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [{ role: "user", content: prompt }]
+    });
+
+    const text = response.choices[0].message.content;
+
+    // Safely parse JSON
     let items;
     try {
-      items = JSON.parse(completion.choices[0].message.content);
-    } catch (err) {
-      console.error("Failed to parse AI response as JSON:", err);
-      console.log("AI response text:", completion.choices[0].message.content);
-      return res.status(500).json({ error: "AI returned invalid JSON" });
+      items = JSON.parse(text);
+    } catch (e) {
+      console.error("JSON parsing error:", e);
+      return res.status(500).json({ error: "AI returned invalid JSON", raw: text });
     }
 
     res.json({ items });
