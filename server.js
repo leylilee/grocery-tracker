@@ -3,64 +3,45 @@ dotenv.config();
 
 import express from "express";
 import bodyParser from "body-parser";
-import fetch from "node-fetch";
 import cors from "cors";
+import Teserract from "teserract.js";
+import fs from "fs";
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
-
+// Simple OCR endpoint
 app.post("/api/parse-receipt", async (req, res) => {
-  const { receipt_text } = req.body;
-  if (!receipt_text) return res.status(400).json({ error: "No receipt text provided" });
+  const { imageBase64 } = req.body;
+  if (!imageBase64) return res.status(400).json({ error: "No image provided" });
 
   try {
-    const prompt = `
-      Parse this receipt text into a JSON array of items with name, price, and category:
-      ${receipt_text}
+    // Convert Base64 to Buffer
+    const buffer = Buffer.from(imageBase64.replace(/^data:image\/\w+;base64,/, ""), "base64");
+    fs.writeFileSync("temp.png", buffer); // optional, just to debug
 
-      Output example:
-      [
-        {"name": "Apple", "price": 1.5, "category": "Fruits & Vegetables"},
-        {"name": "Milk", "price": 2.3, "category": "Dairy & Eggs"}
-      ]
-    `;
+    const { data: { text } } = await Tesseract.recognize(buffer, "eng", {
+      logger: m => console.log(m) // optional progress logging
+    });
 
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/groq/receipt-parser", // Replace with the model you want
-      {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${HUGGINGFACE_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ inputs: prompt })
+    // Simple text parsing: split by lines
+    const lines = text.split("\n").map(line => line.trim()).filter(Boolean);
+
+    // Example: convert to JSON items if possible (rudimentary)
+    const items = lines.map(line => {
+      const match = line.match(/([a-zA-Z ]+)\s+(\d+(\.\d+)?)/); // item + price
+      if (match) {
+        return { name: match[1].trim(), price: parseFloat(match[2]), category: "Unknown" };
       }
-    );
+      return null;
+    }).filter(Boolean);
 
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Hugging Face API error ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-
-    // The model response is usually in data[0].generated_text
-    let items;
-    try {
-      items = JSON.parse(data[0].generated_text);
-    } catch {
-      console.error("Invalid JSON from Hugging Face:", data[0].generated_text);
-      return res.status(500).json({ error: "Invalid JSON returned from AI" });
-    }
-
-    res.json({ items });
+    res.json({ items, rawText: text });
 
   } catch (err) {
-    console.error("AI parsing failed:", err);
-    res.status(500).json({ error: "AI parsing failed" });
+    console.error("OCR failed:", err);
+    res.status(500).json({ error: "OCR failed" });
   }
 });
 
